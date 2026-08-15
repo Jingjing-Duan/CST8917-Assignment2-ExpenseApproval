@@ -1,0 +1,115 @@
+### Test - Start Expense Workflow
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "test@example.com",
+  "amount": 50,
+  "category": "meals",
+  "description": "Team lunch",
+  "managerEmail": "manager@example.com"
+}
+
+### Missing required field
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "amount": 50,
+  "category": "meals",
+  "description": "Team lunch",
+  "managerEmail": "manager@example.com"
+}
+
+### Invalid category
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "test@example.com",
+  "amount": 50,
+  "category": "gaming",
+  "description": "Test expense",
+  "managerEmail": "manager@example.com"
+}
+
+### Scenario 1 - Auto approve under $100
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "test@example.com",
+  "amount": 50,
+  "category": "meals",
+  "description": "Team lunch",
+  "managerEmail": "manager@example.com"
+}
+
+### Expense requires manager
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "test@example.com",
+  "amount": 250,
+  "category": "equipment",
+  "description": "New monitor",
+  "managerEmail": "manager@example.com"
+}
+
+
+### Scenario 2 - Manager approval required
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "test@example.com",
+  "amount": 250,
+  "category": "equipment",
+  "description": "New monitor",
+  "managerEmail": "manager@example.com"
+}
+
+### Manager approves
+
+POST http://localhost:7071/api/expenses/5a978623963547cfb2608699d81ce509/decision
+Content-Type: application/json
+
+{
+  "decision": "approve"
+}
+
+
+### Scenario 3 - Manager rejects
+
+POST http://localhost:7071/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "test@example.com",
+  "amount": 250,
+  "category": "equipment",
+  "description": "New monitor",
+  "managerEmail": "manager@example.com"
+}
+
+### Manager approves
+POST http://localhost:7071/api/expenses/eaf7732891424e4094e711e988a01631/decision
+Content-Type: application/json
+
+{
+  "decision": "reject"
+}
