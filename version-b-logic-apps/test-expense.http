@@ -1,0 +1,93 @@
+POST http://localhost:7071/api/validate-expense
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 250,
+  "category": "equipment",
+  "description": "New monitor",
+  "managerEmail": "manager@example.com"
+}
+
+### =====================================================
+
+
+POST http://localhost:7071/api/validate-expense
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 250,
+  "category": "gaming",
+  "description": "Test",
+  "managerEmail": "manager@example.com"
+}
+
+### Scenario 1 - Valid expense
+POST http://localhost:7071/api/validate-expense
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 50,
+  "category": "meals",
+  "description": "Team lunch",
+  "managerEmail": "manager@example.com"
+}
+
+### =====================================================
+
+### Scenario 2 - Valid expense >= 100
+POST http://localhost:7071/api/validate-expense
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 250,
+  "category": "equipment",
+  "description": "New monitor",
+  "managerEmail": "manager@example.com"
+}
+
+### =====================================================
+
+### Scenario 3 - Manager approve
+GET http://localhost:7071/api/manager-decision/test-request-001/approve
+
+### =====================================================
+
+### Scenario 4 - Check manager decision
+GET http://localhost:7071/api/manager-decision/test-request-001
+
+### =====================================================
+
+### Scenario 5 - Missing required field
+POST http://localhost:7071/api/validate-expense
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 80,
+  "category": "meals",
+  "managerEmail": "manager@example.com"
+}
+
+### =====================================================
+
+### Scenario 6 - Invalid category
+POST http://localhost:7071/api/validate-expense
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 250,
+  "category": "gaming",
+  "description": "Test",
+  "managerEmail": "manager@example.com"
+}
