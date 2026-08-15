@@ -1,90 +1,44 @@
-### Test - Start Expense Workflow
+@baseUrl = http://localhost:7071
 
-POST http://localhost:7071/api/expenses/start
+### =====================================================
+### Scenario 1 - Valid expense under $100
+### Expected: Auto-approved
+### =====================================================
+
+POST {{baseUrl}}/api/expenses/start
 Content-Type: application/json
 
 {
   "employeeName": "Jingjing Duan",
-  "employeeEmail": "test@example.com",
+  "employeeEmail": "employee@example.com",
   "amount": 50,
   "category": "meals",
   "description": "Team lunch",
   "managerEmail": "manager@example.com"
 }
 
-### Missing required field
 
-POST http://localhost:7071/api/expenses/start
+### =====================================================
+### Scenario 2 - Expense >= $100, manager approves
+### Expected: Approved
+### =====================================================
+
+POST {{baseUrl}}/api/expenses/start
 Content-Type: application/json
 
 {
   "employeeName": "Jingjing Duan",
-  "amount": 50,
-  "category": "meals",
-  "description": "Team lunch",
-  "managerEmail": "manager@example.com"
-}
-
-### Invalid category
-
-POST http://localhost:7071/api/expenses/start
-Content-Type: application/json
-
-{
-  "employeeName": "Jingjing Duan",
-  "employeeEmail": "test@example.com",
-  "amount": 50,
-  "category": "gaming",
-  "description": "Test expense",
-  "managerEmail": "manager@example.com"
-}
-
-### Scenario 1 - Auto approve under $100
-
-POST http://localhost:7071/api/expenses/start
-Content-Type: application/json
-
-{
-  "employeeName": "Jingjing Duan",
-  "employeeEmail": "test@example.com",
-  "amount": 50,
-  "category": "meals",
-  "description": "Team lunch",
-  "managerEmail": "manager@example.com"
-}
-
-### Expense requires manager
-
-POST http://localhost:7071/api/expenses/start
-Content-Type: application/json
-
-{
-  "employeeName": "Jingjing Duan",
-  "employeeEmail": "test@example.com",
+  "employeeEmail": "employee@example.com",
   "amount": 250,
   "category": "equipment",
   "description": "New monitor",
   "managerEmail": "manager@example.com"
 }
 
+### After starting the workflow:
+### Copy the returned instance ID and replace INSTANCE_ID below.
 
-### Scenario 2 - Manager approval required
-
-POST http://localhost:7071/api/expenses/start
-Content-Type: application/json
-
-{
-  "employeeName": "Jingjing Duan",
-  "employeeEmail": "test@example.com",
-  "amount": 250,
-  "category": "equipment",
-  "description": "New monitor",
-  "managerEmail": "manager@example.com"
-}
-
-### Manager approves
-
-POST http://localhost:7071/api/expenses/5a978623963547cfb2608699d81ce509/decision
+POST {{baseUrl}}/api/expenses/22509d87f10f46169d7d8fb440d91467/decision
 Content-Type: application/json
 
 {
@@ -92,24 +46,86 @@ Content-Type: application/json
 }
 
 
-### Scenario 3 - Manager rejects
+### =====================================================
+### Scenario 3 - Expense >= $100, manager rejects
+### Expected: Rejected
+### =====================================================
 
-POST http://localhost:7071/api/expenses/start
+POST {{baseUrl}}/api/expenses/start
 Content-Type: application/json
 
 {
   "employeeName": "Jingjing Duan",
-  "employeeEmail": "test@example.com",
+  "employeeEmail": "employee@example.com",
   "amount": 250,
-  "category": "equipment",
-  "description": "New monitor",
+  "category": "software",
+  "description": "Software license",
   "managerEmail": "manager@example.com"
 }
 
-### Manager approves
-POST http://localhost:7071/api/expenses/eaf7732891424e4094e711e988a01631/decision
+### Replace INSTANCE_ID with the ID returned above.
+
+POST {{baseUrl}}/api/expenses/a45bf40f480c4389a755a67eb3eae24c/decision
 Content-Type: application/json
 
 {
   "decision": "reject"
+}
+
+
+### =====================================================
+### Scenario 4 - Expense >= $100, no manager response
+### Expected: Escalated after timeout
+### =====================================================
+
+POST {{baseUrl}}/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 400,
+  "category": "travel",
+  "description": "Conference travel",
+  "managerEmail": "manager@example.com"
+}
+
+### Do NOT send a manager decision.
+### Wait for the configured timeout.
+### Then check the statusQueryGetUri.
+### Expected final status: escalated
+
+
+### =====================================================
+### Scenario 5 - Missing required field
+### Expected: Validation error
+### =====================================================
+
+POST {{baseUrl}}/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "amount": 50,
+  "category": "meals",
+  "description": "Team lunch",
+  "managerEmail": "manager@example.com"
+}
+
+
+### =====================================================
+### Scenario 6 - Invalid category
+### Expected: Validation error
+### =====================================================
+
+POST {{baseUrl}}/api/expenses/start
+Content-Type: application/json
+
+{
+  "employeeName": "Jingjing Duan",
+  "employeeEmail": "employee@example.com",
+  "amount": 75,
+  "category": "gaming",
+  "description": "Invalid category test",
+  "managerEmail": "manager@example.com"
 }

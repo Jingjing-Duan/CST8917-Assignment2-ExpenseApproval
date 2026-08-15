@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import json
 import azure.functions as func
 import azure.durable_functions as df
 
@@ -57,7 +58,7 @@ def expense_orchestrator(
 
     expense = context.get_input()
 
-    # Step 1 - Validate expense
+    # Step 1 - Validate
     validation_result = yield context.call_activity(
         "validate_expense",
         expense
@@ -69,16 +70,13 @@ def expense_orchestrator(
             "error": validation_result["error"]
         }
 
-    # Step 2 - Process expense amount
+    # Step 2 - Process expense
     process_result = yield context.call_activity(
         "process_expense",
         expense
     )
 
-    # -----------------------------------------
-    # Auto-approve expenses under $100
-    # -----------------------------------------
-
+    # Auto approve under $100
     if process_result["status"] == "approved":
 
         notification = {
@@ -100,18 +98,18 @@ def expense_orchestrator(
             "expense": expense
         }
 
-    # -----------------------------------------
-    # Manager approval required
-    # -----------------------------------------
+    # =====================================================
+    # Human Interaction Pattern
+    # Wait for manager decision OR timeout
+    # =====================================================
 
     decision_task = context.wait_for_external_event(
         "manager_decision"
     )
 
-    # One minute timeout for demonstration
     deadline = (
         context.current_utc_datetime
-        + timedelta(minutes=1)
+        + timedelta(minutes=2)
     )
 
     timeout_task = context.create_timer(deadline)
@@ -121,19 +119,24 @@ def expense_orchestrator(
         timeout_task
     ])
 
-    # -----------------------------------------
     # Manager responded first
-    # -----------------------------------------
-
     if winner == decision_task:
 
-        decision = decision_task.result
-
-        # Timer is no longer needed
         timeout_task.cancel()
 
-        # Manager approved
-        if decision.lower() == "approve":
+        raw_decision = decision_task.result
+
+        if isinstance(raw_decision, str):
+            try:
+                decision = json.loads(raw_decision)
+            except json.JSONDecodeError:
+                decision = raw_decision
+        else:
+            decision = raw_decision
+
+        decision = str(decision).strip().lower()
+
+        if decision == "approve":
 
             notification = {
                 "employeeEmail": expense["employeeEmail"],
@@ -154,8 +157,7 @@ def expense_orchestrator(
                 "expense": expense
             }
 
-        # Manager rejected
-        elif decision.lower() == "reject":
+        elif decision == "reject":
 
             notification = {
                 "employeeEmail": expense["employeeEmail"],
@@ -176,31 +178,36 @@ def expense_orchestrator(
                 "expense": expense
             }
 
-    # -----------------------------------------
-    # Timeout occurred first
-    # -----------------------------------------
+        else:
+            return {
+                "status": "error",
+                "reason": f"Unexpected manager decision: {decision}"
+            }
 
-    notification = {
-        "employeeEmail": expense["employeeEmail"],
-        "status": "escalated",
-        "message": (
-            "Your expense was automatically approved "
-            "because the manager did not respond before the timeout."
+    # Timer actually won
+    elif winner == timeout_task:
+
+        notification = {
+            "employeeEmail": expense["employeeEmail"],
+            "status": "escalated",
+            "message": (
+                "Your expense was automatically approved "
+                "because the manager did not respond before the timeout."
+            )
+        }
+
+        notification_result = yield context.call_activity(
+            "send_notification",
+            notification
         )
-    }
 
-    notification_result = yield context.call_activity(
-        "send_notification",
-        notification
-    )
-
-    return {
-        "status": "escalated",
-        "approved": True,
-        "reason": "Manager did not respond before timeout",
-        "notification": notification_result,
-        "expense": expense
-    }
+        return {
+            "status": "escalated",
+            "approved": True,
+            "reason": "Manager did not respond before timeout",
+            "notification": notification_result,
+            "expense": expense
+        }
 
 
 # =========================================================
@@ -267,9 +274,7 @@ def process_expense(expense: dict):
         return {
             "status": "approved",
             "approved": True,
-            "reason": (
-                "Auto-approved because amount is under $100"
-            )
+            "reason": "Auto-approved because amount is under $100"
         }
 
     return {
@@ -329,9 +334,7 @@ async def manager_decision(
 @app.activity_trigger(input_name="notification")
 def send_notification(notification: dict):
 
-    # Simulated notification for local development.
-    # Replace with a real email provider before final submission
-    # if an actual email is required.
+    # Simulated email notification for Version A
 
     return {
         "emailSent": True,
