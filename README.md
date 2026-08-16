@@ -178,10 +178,7 @@ I would choose **Logic Apps instead** when the workflow is primarily integration
 # Screenshots
 
 Version B evidence is stored under:
-
-```text
-version-b-logic-apps/screenshots/
-```
+(https://github.com/Jingjing-Duan/CST8917-Assignment2-ExpenseApproval/tree/main/version-b-logic-apps/screenshots)
 
 The screenshots include:
 
